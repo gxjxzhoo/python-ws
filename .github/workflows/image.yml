@@ -13,6 +13,27 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+      - name: Load shared env (env-config)
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: gxjxzhoo/env-config
+          token: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          path: .shared-env
+      - name: Apply shared env
+        shell: bash
+        run: |
+          f=.shared-env/.env
+          if [ -f "$f" ]; then
+            while IFS= read -r line || [ -n "$line" ]; do
+              case "$line" in ''|\#*) continue ;; esac
+              key="${line%%=*}"; value="${line#*=}"
+              [ -z "$value" ] && continue
+              echo "::add-mask::$value"
+              echo "$key=$value" >> "$GITHUB_ENV"
+            done < "$f"
+          fi
+          rm -rf .shared-env
 
       - uses: docker/setup-buildx-action@v3
 
@@ -28,7 +49,7 @@ jobs:
         with:
           registry: docker.io
           username: gxjxzgx
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          password: ${{ env.DOCKERHUB_TOKEN || secrets.DOCKERHUB_TOKEN }}
 
       - name: Extract metadata
         id: meta
