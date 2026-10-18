@@ -23,6 +23,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: gxjxzgx
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -32,10 +39,21 @@ jobs:
             type=raw,value=latest
             type=sha,format=short
 
+      - name: Extract metadata (Docker Hub)
+        id: meta_hub
+        uses: docker/metadata-action@v5
+        with:
+          images: docker.io/gxjxzgx/python-ws
+          tags: |
+            type=raw,value=latest
+            type=sha,format=short
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            ${{ steps.meta_hub.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
