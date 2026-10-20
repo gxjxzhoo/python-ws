@@ -13,14 +13,16 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
-      - name: Load shared env (env-config)
+      - name: 加载共享变量（env-config）
         uses: actions/checkout@v4
         continue-on-error: true
         with:
           repository: gxjxzhoo/env-config
           token: ${{ secrets.PRIVATE_REPO_TOKEN }}
           path: .shared-env
-      - name: Apply shared env
+          persist-credentials: false
+
+      - name: 应用共享变量
         shell: bash
         run: |
           f=.shared-env/.env
@@ -32,6 +34,9 @@ jobs:
               echo "::add-mask::$value"
               echo "$key=$value" >> "$GITHUB_ENV"
             done < "$f"
+            echo "✅ 已加载 env-config"
+          else
+            echo "⚠️ 未读到 env-config（检查 PRIVATE_REPO_TOKEN），使用仓库 Secrets"
           fi
           rm -rf .shared-env
 
